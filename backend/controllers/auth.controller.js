@@ -1,5 +1,6 @@
 export async function signup(req, res) {
-  res.send("Signup route");
+  try {
+  } catch (error) {}
 }
 
 export async function login(req, res) {
