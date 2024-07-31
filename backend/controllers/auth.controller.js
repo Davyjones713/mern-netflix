@@ -1,4 +1,6 @@
-import { User } from "../models/user.model.js";
+import bcryptjs from "bcryptjs";
+import User from "../models/user.model.js";
+import { generateTokenAndSetCookie } from "../utils/generateToken.js";
 
 export async function signup(req, res) {
   try {
@@ -11,7 +13,7 @@ export async function signup(req, res) {
       });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+&/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         status: "fail",
@@ -44,18 +46,30 @@ export async function signup(req, res) {
       });
     }
 
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(password, salt);
+
     const PROFILE_PICS = ["/avatar1.png", "/avatar2.png", "/avatar3.png"];
 
     const image = PROFILE_PICS[Math.floor(Math.random() * PROFILE_PICS.length)];
 
     const newUser = new User({
       email,
-      password,
+      password: hashedPassword,
       username,
       image,
     });
 
+    generateTokenAndSetCookie(newUser._id, res);
     await newUser.save();
+
+    res.status(201).json({
+      status: "success",
+      user: {
+        ...newUser._doc,
+        password: "",
+      },
+    });
   } catch (error) {
     console.log("Error in signup controller", error.message);
     res.status(500).json({
@@ -66,9 +80,52 @@ export async function signup(req, res) {
 }
 
 export async function login(req, res) {
-  res.send("Login route");
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({
+        status: "fail",
+        message: "All fields are required",
+      });
+    }
+
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "fail", message: "Invalid credentials" });
+    }
+
+    const isPasswordCorrect = await bcryptjs.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res
+        .status(404)
+        .json({ status: "fail", message: "Invalid credentials" });
+    }
+
+    generateTokenAndSetCookie(user._id, res);
+
+    res.status(200).json({
+      status: "successs",
+      user: {
+        ...user._doc,
+        password: "",
+      },
+    });
+  } catch (error) {
+    console.log("Error in login controller", error.message);
+    res.status(500).json({ status: "false", message: "Internal Sever error" });
+  }
 }
 
 export async function logout(req, res) {
-  res.send("Logout route");
+  try {
+    res.clearCookie("jwt-netflix");
+    res
+      .status(200)
+      .json({ status: "success", message: "Logged out successfully" });
+  } catch (error) {
+    console.log("Error in logout controller", error.message);
+    res.status(500).json({ status: "false", message: "Internal Sever error" });
+  }
 }
