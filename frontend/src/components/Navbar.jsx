@@ -22,7 +22,7 @@ function Navbar() {
             className="w-32 sm:w-40"
           />
         </Link>
-        <div className="hidden sm:flex gap-2 items-center">
+        <div className="hidden sm:flex gap-6 items-center">
           <Link
             to="/"
             className="hover:underline"
@@ -44,7 +44,7 @@ function Navbar() {
       </div>
 
       <div className="flex gap-2 items-center z-50">
-        <Link to="/history">
+        <Link to="/search">
           <Search className="size-6 cursor-pointer" />
         </Link>
         <img
