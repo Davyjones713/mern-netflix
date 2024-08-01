@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/authUser";
 
 function LoginPage() {
-  const { login } = useAuthStore();
+  const { login, isLogingIn } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -64,8 +64,9 @@ function LoginPage() {
             <button
               className="w-full py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700"
               onClick={handleLogin}
+              disabled={isLogingIn}
             >
-              Login
+              {isLogingIn ? "Loading..." : "Login"}
             </button>
           </form>
           <div className="text-center text-gray-400">
